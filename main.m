@@ -1,9 +1,9 @@
 
 clear all
 
-addpath('func_common');
+addpath('E:\surfdrive\DATA\func_common');
 addpath('kf_func');
-addpath(genpath('E:\Data\_data_damged_quadrotor'));
+addpath(genpath('E:\surfdrive\DATA\_data_cyberzoo'));
 
 load('take.mat');
 take.name = ['2017-10-19 10.38.15 AM'];

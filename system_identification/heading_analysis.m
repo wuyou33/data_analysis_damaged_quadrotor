@@ -10,7 +10,7 @@ w2ref = interp1(psi_mod2(du)+52.7,OB_a.w2ref(du),psi,'near');
 w3ref = interp1(psi_mod2(du)+127.3,OB_a.w3ref(du),psi,'near');
 w4ref = interp1(psi_mod2(du)-127.3,OB_a.w4ref(du),psi,'near');
 
-r  = interp1(psi_mod2(du),OB_a.R(du),psi,'near');
+r  = interp1(psi_mod2(du),OB_a.r(du),psi,'near');
 
 x_grid = cos((psi)/57.3);
 y_grid = sin((psi)/57.3);

@@ -63,6 +63,12 @@ switch method
         maxlag_firstloop = 3;
         maxlag_otherloops = 1;
         percent_firstrun = 0.15;
+    case 'P'
+        s1 = OB_a.p;
+        s2 = OT_a.P;
+        maxlag_firstloop = 3;
+        maxlag_otherloops = 1; 
+        percent_firstrun = 0.15;        
 end
         
 % append shortest of two signals with zeros to get equal size

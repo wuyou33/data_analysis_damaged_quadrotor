@@ -1,11 +1,24 @@
+%%
+% This schipt read data from the OJF in the damaged condition. the
+% stability frame is defined to project the force on. The lateral force on
+% the stability frame can be observed. The forces are differentiated from
+% the speed measured by the optitrack system.
+%%
 
-clear all
+import = 1;
 
-for  index = 47; %b47 r54 81
+if import == 1
+    clear all
 
-addpath(genpath('E:\Data\_code_import_files'));
-[OB_a,OT_a,WIND,PARA,take,DU] = import_data(index,1, 1, 1,1,1,'Q',0);
+    index = 20; %b47 r54 81
 
+    addpath(genpath('E:\surfdrive\DATA\_code_import_files'));
+    addpath(genpath('E:\surfdrive\DATA\func_common'));
+    file_index = 'E:\surfdrive\DATA\_data_OJF_june_2018\SRFDRF\Log_OJF_June';
+    % file_index = 'E:\Data\optitrack_onboard_data_index';
+
+    [OB_a,OT_a,WIND,PARA,take,DU] = import_data(index,file_index,1,'phi_ot', 0, 0);
+end
 %% plot raw data
 % figure
 % subplot(2,1,1)
@@ -53,7 +66,7 @@ addpath(genpath('E:\Data\_code_import_files'));
 
 DU = [1, length(OT_a.TIME)];
 DU = [round(length(OT_a.TIME)/20), round(length(OT_a.TIME)*9.5/10)];
-DU = [10920 139600]; %RB n = 0;
+% DU = [10920 139600]; %RB n = 0;
 % DU = [1 137900]; %LB n = 0
 % DU = [24950 32450]; %#48 v = 1
 % DU = [47680 51400]; %#48 v = 2
@@ -67,7 +80,7 @@ DU = [10920 139600]; %RB n = 0;
 % DU = [9729 13260]; %#47 v = 1
 % DU = [28250 32120]; %#47 v = 2
 % DU = [43380 46690]; %#47 v = 3
-DU = [57080 60620]; %#47 v = 4
+% DU = [57080 60620]; %#47 v = 4
 % DU = [73450 76260]; %#47 v = 5
 % DU = [83860 87020]; %#47 v = 6
 % DU = [93300 96690]; %#47 v = 7
@@ -83,6 +96,10 @@ DU = [57080 60620]; %#47 v = 4
 % DU = [121600 124600]; %#50 v = 8
 % DU = [130500 131500]; %#50 v = 9
 
+% DU = [11710,12880]; %#135
+
+g = 9.8124;
+
 fc = 3.0;
 du = DU(1):DU(2);
 % du = 76790:82910;
@@ -95,9 +112,6 @@ VZ_filt = butterworth(OT_a.VZ,4,fc/256);
 VX_filt = butterworth(VX_filt,4,fc/256);
 VY_filt = butterworth(VY_filt,4,fc/256);
 VZ_filt = butterworth(VZ_filt,4,fc/256);
-
-
-
 
 wa= (OB_a.w1obs+OB_a.w2obs+OB_a.w3obs+OB_a.w4obs)/4;
 VY_air_filt = butterworth(OT_a.VY_air,4,fc/256);
@@ -118,7 +132,7 @@ V_filt = sqrt(VX_filt.^2+VY_air_filt.^2+VZ_filt.^2);
 % du = intersect(du1,du2);
 %% analyze states in different heading angle
 
-r = compress_matrix(OB_a.R(du),50);
+r = compress_matrix(OB_a.r(du),50);
 w1 = compress_matrix(OB_a.w1obs(du),50)*2*pi/60;
 w2 = compress_matrix(OB_a.w2obs(du),50)*2*pi/60;
 w3 = compress_matrix(OB_a.w3obs(du),50)*2*pi/60;
@@ -216,23 +230,23 @@ psi_mod = mod(OT_a.PSI,360)-180;
 % plot(Vs(du,3),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
 % 
 
-figure
-subplot(3,1,1);
-plot(sqrt(OT_a.VX_air(du).^2+VY_air_filt(du).^2+OT_a.VZ_air(du).^2),As(du,1));  ylabel('As_x');title(take.name);
-grid on;
-subplot(3,1,2);
-plot(VY_air_filt(du),As(du,2));grid on; ylabel('As_y');
-subplot(3,1,3);
-plot(VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
-
 % figure
-% subplot(3,1,2);
-% plot(-VY_air_filt(du),-As(du,1));  ylabel('As_y');
-% grid on;
 % subplot(3,1,1);
-% plot(-VY_air_filt(du),As(du,2));grid on; ylabel('As_x');title(take.name);
+% plot(sqrt(OT_a.VX_air(du).^2+VY_air_filt(du).^2+OT_a.VZ_air(du).^2),As(du,1));  ylabel('As_x');title(take.name);
+% grid on;
+% subplot(3,1,2);
+% plot(VY_air_filt(du),As(du,2));grid on; ylabel('As_y');
 % subplot(3,1,3);
-% plot(-VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
+% plot(VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
+
+figure
+subplot(3,1,2);
+plot(-VY_air_filt(du),-As(du,1));  ylabel('As_y');
+grid on;
+subplot(3,1,1);
+plot(-VY_air_filt(du),As(du,2));grid on; ylabel('As_x');title(take.name);
+subplot(3,1,3);
+plot(-VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
 
 % figure
 % plot(VY_air_filt(du),OB_a.R(du)); ylabel('R'); xlabel('Vy_{air}');title(take.name);
@@ -298,14 +312,14 @@ dMx = Mx - k0*b*up;
 dMy = My - k0*l*uq;
 dMz = Mz - t0*ur - dr*r;
 
-figure(11)
-subplot(2,3,5)
-plot(compress_matrix(psi_mod(du),50),compress_matrix(dMx,50),'+'); hold on;
-plot(compress_matrix(psi_mod(du),50),compress_matrix(dMy,50),'o'); hold on;
+% figure(11)
+% subplot(2,3,5)
+% plot(compress_matrix(psi_mod(du),50),compress_matrix(dMx,50),'+'); hold on;
+% plot(compress_matrix(psi_mod(du),50),compress_matrix(dMy,50),'o'); hold on;
 
 % figure
 % plot3(compress_matrix(OT_a.VY_air,20),compress_matrix(psi_mod,20),compress_matrix(dMx,20),'.')
-end
+
 return;
 
 
@@ -529,3 +543,29 @@ x0 = lines(i).XData;
 y0 = lines(i).YData;
 x = compress_matrix(x0',n);
 y = compress_matrix(y0',n);
+
+%%
+
+ax_filt = butterworth(OB_a.ax,4,6/256)*g;
+ay_filt = butterworth(OB_a.ay,4,6/256)*g;
+az_filt = butterworth(OB_a.az,4,6/256)*g;
+
+Ai = zeros(length(ax_filt),3);
+for i = 1:length(OT_a.TIME)
+    theta = OT_a.THETA(i)/57.3; phi = OT_a.PHI(i)/57.3; psi = OT_a.PSI(i)/57.3;
+    R_BI = [cos(theta)*cos(psi) cos(theta)*sin(psi) -sin(theta);
+            sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi) sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi) sin(phi)*cos(theta);
+            cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi) cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi) cos(phi)*cos(theta)];    
+    
+    R_IB = R_BI';
+    
+    Ai(i,:) = (R_IB*[ax_filt(i),ay_filt(i),az_filt(i)]')';
+end
+
+figure
+subplot(3,1,1)
+plot(-VY_air_filt(du),Ai(du,1));
+subplot(3,1,2)
+plot(-VY_air_filt(du),Ai(du,2));
+subplot(3,1,3)
+plot(-VY_air_filt(du),Ai(du,3));
