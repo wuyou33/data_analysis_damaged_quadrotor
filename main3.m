@@ -12,13 +12,13 @@ if import
     
     clear all;
     
-    for  index = 9
+    for  index = 32
         
     addpath(genpath('E:\surfdrive\DATA\_code_import_files'));
     file_index = 'E:\surfdrive\DATA\_data_OJF_june_2018\SRFDRF\Log_OJF_June';
 %     file_index = 'E:\surfdrive\DATA\_data_OJF_may_2018\Log_OJF_May';
 %     file_index = 'E:\surfdrive\DATA\_data_OJF_november_2017\Log_OJF_Nov';
-    [OB_a,OT_a,WIND,PARA,take,DU] = import_data(index,file_index,0,'phi_ot', 1, 0, 1, 0);
+    [OB_a,OT_a,WIND,PARA,take,DU] = import_data(index,file_index,1,'phi_ot', 1, 0, 0, 0);
     end
     
     import = 1;
@@ -34,7 +34,7 @@ DU(1)
 % DU = [round(length(OT_a.TIME)/30), round(length(OT_a.TIME)*9.0/10)];
 
 % DRF 2#4 removed, r>0
-DU = [25120 33700]; %#9 V = 2
+% DU = [25120 33700]; %#9 V = 2
 % DU = [46430 54350]; %#9 V = 4
 % DU = [65850 72360]; %#9 V = 6
 % DU = [83100 91680]; %#9 V = 8
@@ -89,13 +89,13 @@ DU = [25120 33700]; %#9 V = 2
 % DU = [52710 53420]; %#35 V = 6
 % DU = [22600 53420];
 
-% DU = [30700 42220]; %#23 v = 2 SRF r>0 lb removed
+% DU = [30700 42220]; %#23 v = 2 SRF r>0 lb removed May
 % DU = [57670 65810]; %#23 v = 4
 % DU = [77980 83230]; %#23 v = 6
 % DU = [98090 100200]; %#23 v = 8
-% DU = [3891 100200];
+% DU = [30700 100200];
 
-% DU = [31500 39470]; %#25 v = 2 SRF r<0 rb removed
+% DU = [31500 39470]; %#25 v = 2 SRF r<0 rb removed May
 % DU = [53140 58640]; %#25 v = 4
 % DU = [67680 75360]; %#25 v = 6
 % DU = [85470 92750]; %#25 v = 8
@@ -110,6 +110,7 @@ DU = [25120 33700]; %#9 V = 2
 % DU = [105700 109900]; %#48 v = 6
 % DU = [120300 123900]; %#48 v = 7
 % DU = [132600 139300]; %#48 v = 8
+% DU = [24950 139300];
 
 % DU = [9729 13260]; %#47 v = 1
 % DU = [28250 32120]; %#47 v = 2
@@ -118,13 +119,19 @@ DU = [25120 33700]; %#9 V = 2
 % DU = [73450 76260]; %#47 v = 5
 % DU = [83860 87020]; %#47 v = 6
 % DU = [93300 96690]; %#47 v = 7
-DU = [105400 106000]; %#47 v = 8
+% DU = [105400 106000]; %#47 v = 8
+% DU = [9729 106000];
 
-% DU = [24380 90710]; %#92 2-10 Norminal
+% DU = [24380 90710]; %#92 2-10 Norminal May
+% DU = [24380 117810]; %#92 2-15 Norminal May
 
-% DU = [1 63210]; %#93 4-10 Norminal beta = -90;
+% DU = [1 63210]; %#93 4-10 Norminal beta = -90; May
 
-% DU = [1 161100]; %#122 up_down nominal;
+% DU = [1 161100]; %#122 up_down nominal; May
+
+% DU = [1 238300]; %#102 2-15 Norminal heavy; Nov
+
+% DU = [8191 22960]; %#135 demo for 2018 iros paper
 
 du = DU(1):DU(2);
 
@@ -132,8 +139,6 @@ du = DU(1):DU(2);
 
 
 %%
-addpath(genpath('E:\system identification\quadrotor identification\models'));
-K = load('model_individual');
 N = length(OB_a.TIME);
 l = PARA.l; b = PARA.b; m = PARA.mass/1000; Iv = PARA.Iv; R = PARA.R;
 Area = pi*R^2;
@@ -236,22 +241,38 @@ if strcmp(take.drone,'bebop2_guido')
     dax=-0.198937;
     day=-0.118300;
     daz=-0.314115;
+elseif strcmp(take.drone,'leon')
+    dax = 0.3824; 
+    day = 0.1153; 
+    daz = -0.5213;
 else
-    dax = 0; day = 0; daz = 0;
+    dax = 0;
+    day = -0.3;
+    daz = -0.2;
 end
 
-if strcmp(file_index, 'E:\surfdrive\DATA\_data_OJF_november_2017\Log_OJF_Nov')
-    fcx = butterworth(OB_a.ax,4,15/256) - dax;
-    fcy = butterworth(OB_a.ay,4,15/256) - day;
-    fcz = butterworth(OB_a.az,4,15/256) - daz;
-elseif strcmp(file_index, 'E:\surfdrive\DATA\_data_OJF_may_2018\Log_OJF_May') && strcmp(take.configuration,'drf')
-    fcx = butterworth(OB_a.ax,4,15/256) - dax;
-    fcy = butterworth(OB_a.ay,4,15/256) - day;
-    fcz = butterworth(OB_a.az,4,15/256) - daz;    
-else
+% if strcmp(file_index, 'E:\surfdrive\DATA\_data_OJF_november_2017\Log_OJF_Nov')
+%     fcx = butterworth(OB_a.ax,4,15/256) - dax;
+%     fcy = butterworth(OB_a.ay,4,15/256) - day;
+%     fcz = butterworth(OB_a.az,4,15/256) - daz;
+% elseif strcmp(file_index, 'E:\surfdrive\DATA\_data_OJF_may_2018\Log_OJF_May') && strcmp(take.configuration,'drf')
+%     fcx = butterworth(OB_a.ax,4,15/256) - dax;
+%     fcy = butterworth(OB_a.ay,4,15/256) - day;
+%     fcz = butterworth(OB_a.az,4,15/256) - daz;    
+% else
+%     fcx = butterworth(OB_a.ax,4,15/256)*g - dax;
+%     fcy = butterworth(OB_a.ay,4,15/256)*g - day;
+%     fcz = butterworth(OB_a.az,4,15/256)*g - daz;
+% end
+
+if mean(abs( butterworth(OB_a.az,4,15/256))) <= 2
     fcx = butterworth(OB_a.ax,4,15/256)*g - dax;
     fcy = butterworth(OB_a.ay,4,15/256)*g - day;
     fcz = butterworth(OB_a.az,4,15/256)*g - daz;
+else
+    fcx = butterworth(OB_a.ax,4,15/256) - dax;
+    fcy = butterworth(OB_a.ay,4,15/256) - day;
+    fcz = butterworth(OB_a.az,4,15/256) - daz;
 end
 % fcx = butterworth(OB_a.ax,4,15/256);
 % fcy = butterworth(OB_a.ay,4,15/256);
@@ -333,11 +354,16 @@ for i = 1:length(VoI)
 end
 
 figure
-plot(dVoB(du,1),'b'); hold on;plot(dVoB(du,2) ,'r');plot(dVoB(du,3) ,'g');
-plot(Y(du,1),'b-.');plot(Y(du,2),'r-.');plot(Y(du,3),'g-.');
+plot(dVoB(du,1),'b'); hold on; plot(Y(du,1),'r-.')
+plot(dVoB(du,2) ,'b');plot(dVoB(du,3) ,'b');
+plot(Y(du,2),'r-.');plot(Y(du,3),'r-.');
 % YYY = fc(du,:)'+ gB(du,:)' - cross(pqr_dot',repmat(rcxy,1,N)) - cross(pqr,cross(pqr,repmat(rcxy,1,N)'));
 
 end
+
+% if import == 1
+%     return;
+% end
 %% Plot resultant force on the c.g. with the information of accelerometer and ra.
 
 f = zeros(size(VoI));
@@ -350,15 +376,19 @@ end
 figure
 subplot(3,1,1)
 plot(fc(du,1)); hold on;
-plot(f(du,1)); ylabel('a_x [m/s^2]')
+plot(f(du,1)); ylabel('F_x/m [m/s^2]'); xlim([0,1500]);
+ set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
 subplot(3,1,2)
 plot(fc(du,2)); hold on;
-plot(f(du,2)); ylabel('a_y [m/s^2]')
+plot(f(du,2)); ylabel('F_y/m [m/s^2]'); xlim([0,1500]);
+ set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
 subplot(3,1,3)
 plot(fc(du,3)); hold on;
-plot(f(du,3)); ylabel('a_z [m/s^2]')
+plot(f(du,3)); ylabel('F_z [m/s^2]'); xlim([0,1500]);
+ set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
 legend('mea','corrected')
-
+xlabel('time [s]');
+set(gcf,'position',[722    27   299   306]);
 if validate_force == 1
 F = m*f;
 M = [0 0 0; diff(pqr)*512]*Iv + cross(pqr',Iv*pqr')' + ...
@@ -382,6 +412,11 @@ d = [ l + rc(1),    -b + rc(2), 0 + rc(3);
      -l + rc(1),     b + rc(2), 0 + rc(3);
      -l + rc(1),    -b + rc(2), 0 + rc(3)];
  
+% d = [ l ,    -b , 0;
+%       l ,     b , 0;
+%      -l ,     b, 0;
+%      -l ,    -b , 0];
+ 
 V1 = cross(pqr,repmat(d(1,:),size(V,1),1)) + V;
 V2 = cross(pqr,repmat(d(2,:),size(V,1),1)) + V;
 V3 = cross(pqr,repmat(d(3,:),size(V,1),1)) + V;
@@ -395,11 +430,27 @@ va2 = sqrt(u2.^2+v2.^2+w2.^2);
 va3 = sqrt(u3.^2+v3.^2+w3.^2);
 va4 = sqrt(u4.^2+v4.^2+w4.^2);
 
-load('E:\system identification\quadrotor identification\models\Cz_airframe_BB2');
+%%
+figure(45)
+subplot(3,1,1)
+plot(u1(du)); hold on; xlim([0,1500]); ylabel('u_1 [m/s]');
+ set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
+subplot(3,1,2)
+plot(v1(du)); hold on; xlim([0,1500]);  ylabel('u_1 [m/s]');
+set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
+subplot(3,1,3) 
+plot(w1(du)); hold on; xlim([0,1500]); ylabel('w_1 [m/s]');
+set(gca,'XTickLabel',[{'0'},{'1'},{'2'},{'3'}]);
+xlabel('time [s]');
+set(gcf,'position',[722    27   299   306]);
+%%
+load('E:\surfdrive\DATA\AeroModels\Cz_airframe_BB2');
 % load('E:\system identification\Rotor_Data\rotor_static_drag_model_BB2.mat');
-load('E:\system identification\damaged_model_identification\Rotor_Data\rotor_torque_model_BB2.mat');
-load('E:\system identification\damaged_model_identification\Ct_Cq_model\Ct_model_BB2.mat');
-load('E:\system identification\damaged_model_identification\Ct_Cq_model\Cq_model_BB2.mat');
+% load('E:\system identification\damaged_model_identification\Rotor_Data\rotor_torque_model_BB2.mat');
+% load('E:\surfdrive\DATA\AeroModels\Ct_model_BB2_surf.mat');
+% load('E:\surfdrive\DATA\AeroModels\Cq_model_BB2_surf.mat');
+load('E:\surfdrive\DATA\AeroModels\Ct_model_BB2_v2.mat');
+load('E:\surfdrive\DATA\AeroModels\Cq_model_BB2_v2.mat');
 
 alpha = atan(w./(sqrt(u.^2+v.^2)))*57.3;
 alpha1 = atan(w1./sqrt(u1.^2+v1.^2))*57.3;
@@ -419,10 +470,23 @@ fz_airframe = (u.^2 + v.^2 + w.^2).* interp1(AoA_airframe, Cz_airframe, alpha ,'
 
 % fz_airframe = 0;
 
-fx = K.kx*u1.*omega1_bar + K.kx*u2.*omega2_bar + K.kx*u3.*omega3_bar + K.kx*u4.*omega4_bar;
-fy = K.ky*v1.*omega1_bar + K.ky*v2.*omega2_bar + K.ky*v3.*omega3_bar + K.ky*v4.*omega4_bar;
-
-
+% fx = K.kx*u1.*omega1_bar + K.kx*u2.*omega2_bar + K.kx*u3.*omega3_bar + K.kx*u4.*omega4_bar;
+% fy = K.ky*v1.*omega1_bar + K.ky*v2.*omega2_bar + K.ky*v3.*omega3_bar + K.ky*v4.*omega4_bar;
+fx = zeros(size(u));
+fy = zeros(size(u));
+% u_bar = u./va; v_bar = v./va; w_bar = w./va;
+% S = 4*b*l;
+% fx = (u1.*omega1.*aero_model.k_model{4} + SN(1).*v1.*omega1.*aero_model.k_model{5}) + ...
+%       u2.*omega2.*aero_model.k_model{4} + SN(2).*v2.*omega2.*aero_model.k_model{5}+...
+%       u3.*omega3.*aero_model.k_model{4} + SN(3).*v3.*omega2.*aero_model.k_model{5}+...
+%       u4.*omega4.*aero_model.k_model{4} + SN(4).*v4.*omega2.*aero_model.k_model{5} + ...
+%       P32(sign(u_bar).*abs(u_bar),w_bar,va.^2*S*1.225/2.*sign(u_bar))*aero_model.k_model{2};
+% fy = -SN(1).*u1.*omega1.*aero_model.k_model{5} + v1.*omega1.*aero_model.k_model{4} + ...
+%      -SN(2).*u2.*omega1.*aero_model.k_model{5} + v2.*omega2.*aero_model.k_model{4} + ...
+%      -SN(3).*u3.*omega1.*aero_model.k_model{5} + v3.*omega3.*aero_model.k_model{4} + ...
+%      -SN(4).*u4.*omega1.*aero_model.k_model{5} + v4.*omega4.*aero_model.k_model{4} + ...
+%       P32(sign(v_bar).*abs(v_bar),w_bar,va.^2*S*1.225/2.*sign(v_bar))*aero_model.k_model{3};
+ 
 % fz from static rotor data.
 vv1 = va1./omega1/R;
 vv2 = va2./omega2/R;
@@ -435,17 +499,21 @@ i_inf3 = intersect(find(vv3 ~= inf),find(vv3 ~= -inf));
 i_inf4 = intersect(find(vv4 ~= inf),find(vv4 ~= -inf));
 
 Ct1 = zeros(size(vv1)); Ct2 = zeros(size(vv2)); Ct3 = zeros(size(vv3)); Ct4 = zeros(size(vv4));
-Ct1(i_inf1) = Ct_model_BB2_surf(alpha1(i_inf1),vv1(i_inf1));
-Ct2(i_inf2) = Ct_model_BB2_surf(alpha2(i_inf2),vv2(i_inf2));
-Ct3(i_inf3) = Ct_model_BB2_surf(alpha3(i_inf3),vv3(i_inf3));
-Ct4(i_inf4) = Ct_model_BB2_surf(alpha4(i_inf4),vv4(i_inf4));
+% Ct1(i_inf1) = Ct_model_BB2_surf(alpha1(i_inf1),vv1(i_inf1));
+% Ct2(i_inf2) = Ct_model_BB2_surf(alpha2(i_inf2),vv2(i_inf2));
+% Ct3(i_inf3) = Ct_model_BB2_surf(alpha3(i_inf3),vv3(i_inf3));
+% Ct4(i_inf4) = Ct_model_BB2_surf(alpha4(i_inf4),vv4(i_inf4));
+Ct1(i_inf1) = P52CtCq(alpha1(i_inf1),vv1(i_inf1))*k_Ct0;
+Ct2(i_inf2) = P52CtCq(alpha2(i_inf2),vv2(i_inf2))*k_Ct0;
+Ct3(i_inf3) = P52CtCq(alpha3(i_inf3),vv3(i_inf3))*k_Ct0;
+Ct4(i_inf4) = P52CtCq(alpha4(i_inf4),vv4(i_inf4))*k_Ct0;
 
 T1 = Ct1.*(omega1*R).^2*Area*rho;
 T2 = Ct2.*(omega2*R).^2*Area*rho;
 T3 = Ct3.*(omega3*R).^2*Area*rho;
 T4 = Ct4.*(omega4*R).^2*Area*rho;
 
-fz = -(T1 + T2 + T3+ T4) + fz_airframe;
+fz = -(T1 + T2 + T3+ T4);
 
 % fz = -(P33(u1,v1,w1,omega1_bar)*K.kt + P33(u2,v2,w2,omega2_bar)*K.kt + P33(u3,v3,w3,omega3_bar)*K.kt + P33(u4,v4,w4,omega4_bar)*K.kt) ...
 %      + fz_airframe + fz_rotor_static;
@@ -523,10 +591,14 @@ my = SM(1)*l*(T1+dT1) + SM(2)*l*(T2+dT2) + SM(3)*l*(T3+dT3) + SM(4)*l*(T4+dT4);
 
 % mz from the dimensionless single rotor data
 Cq1 = zeros(size(vv1)); Cq2 = zeros(size(vv2)); Cq3 = zeros(size(vv3)); Cq4 = zeros(size(vv4));
-Cq1(i_inf1) = Cq_model_BB2_surf(alpha1(i_inf1),vv1(i_inf1));
-Cq2(i_inf2) = Cq_model_BB2_surf(alpha2(i_inf2),vv2(i_inf2));
-Cq3(i_inf3) = Cq_model_BB2_surf(alpha3(i_inf3),vv3(i_inf3));
-Cq4(i_inf4) = Cq_model_BB2_surf(alpha4(i_inf4),vv4(i_inf4));
+% Cq1(i_inf1) = Cq_model_BB2_surf(alpha1(i_inf1),vv1(i_inf1));
+% Cq2(i_inf2) = Cq_model_BB2_surf(alpha2(i_inf2),vv2(i_inf2));
+% Cq3(i_inf3) = Cq_model_BB2_surf(alpha3(i_inf3),vv3(i_inf3));
+% Cq4(i_inf4) = Cq_model_BB2_surf(alpha4(i_inf4),vv4(i_inf4));
+Cq1(i_inf1) = P52CtCq(alpha1(i_inf1),vv1(i_inf1))*k_Cq0;
+Cq2(i_inf2) = P52CtCq(alpha2(i_inf2),vv2(i_inf2))*k_Cq0;
+Cq3(i_inf3) = P52CtCq(alpha3(i_inf3),vv3(i_inf3))*k_Cq0;
+Cq4(i_inf4) = P52CtCq(alpha4(i_inf4),vv4(i_inf4))*k_Cq0;
 
 Q1 = -Cq1.*(omega1*R).^2*Area*rho;
 Q2 =  Cq2.*(omega2*R).^2*Area*rho;
@@ -536,16 +608,16 @@ Q4 =  Cq4.*(omega4*R).^2*Area*rho;
 mz = Q1 + Q2 + Q3 + Q4;
  %%
 
-% figure
-% subplot(3,1,1)
-% plot(psi_mod(du),Fx(du),'b.'); hold on;
-% plot(psi_mod(du),fx(du),'r.'); ylabel('fx'); legend('mea','model');
-% subplot(3,1,2)
-% plot(psi_mod(du),Fy(du),'b.'); hold on;
-% plot(psi_mod(du),fy(du),'r.'); ylabel('fy'); legend('mea','model');
-% subplot(3,1,3)
-% plot(psi_mod(du),Fz(du),'b.'); hold on; ylabel('fz');
-% plot(psi_mod(du),fz(du),'r.'); hold on; legend('mea','model');
+figure
+subplot(3,1,1)
+plot(psi_mod(du),Fx(du),'b.'); hold on;
+plot(psi_mod(du),fx(du),'r.'); ylabel('fx'); legend('mea','model');
+subplot(3,1,2)
+plot(psi_mod(du),Fy(du),'b.'); hold on;
+plot(psi_mod(du),fy(du),'r.'); ylabel('fy'); legend('mea','model');
+subplot(3,1,3)
+plot(psi_mod(du),Fz(du),'b.'); hold on; ylabel('fz');
+plot(psi_mod(du),fz(du),'r.'); hold on; legend('mea','model');
 
 
 figure
@@ -565,6 +637,7 @@ plot(my(du));
 theta = OT_a.THETA/57.3;
 phi = OT_a.PHI/57.3;
 psi = OT_a.PSI/57.3;
+
 save(['./data/', num2str(index),'_',num2str(DU(1)),'-',num2str(DU(2))], ...
     'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz', ...
     'fx', 'fy', 'fz', 'mx', 'my', 'mz', ...
@@ -575,7 +648,8 @@ save(['./data/', num2str(index),'_',num2str(DU(1)),'-',num2str(DU(2))], ...
     'alpha','psi_mod','DU',...
     'p','q','r',...
     'phi','theta','psi',...
-    'omega1_dot','omega2_dot','omega3_dot','omega4_dot');
+    'omega1_dot','omega2_dot','omega3_dot','omega4_dot',...
+    'rc');
 end
 
 return;
@@ -597,19 +671,65 @@ end
 % plot(psi_mod2(du),fi(du,1),'.'); hold on;
 % plot(psi_mod2(du),fi(du,2),'.');
 
-% figure
-% subplot(2,1,1)
-% plot(fi(du,1),'.'); hold on;
-% plot(fi_model(du,1),'.'); 
-% subplot(2,1,2)
-% plot(fi(du,2),'.'); hold on;
-% plot(fi_model(du,2),'.');
-
 figure
 subplot(2,1,1)
-plot(-OT_a.VY_air(du),m*fi(du,1),'.'); hold on;
+plot(fi(du,1),'.'); hold on;
+plot(fi_model(du,1),'.'); 
 subplot(2,1,2)
+plot(fi(du,2),'.'); hold on;
+plot(fi_model(du,2),'.');
+
+figure
+subplot(2,1,2)
+plot(-OT_a.VY_air(du),-m*fi(du,1),'.'); hold on;
+plot(-OT_a.VY_air(du),-m*fi_model(du,1),'.'); hold on;
+subplot(2,1,1)
 plot(-OT_a.VY_air(du),m*fi(du,2),'.'); hold on;
+plot(-OT_a.VY_air(du),m*fi_model(du,2),'.'); hold on;
+
+
+
+return
+
+%% Sensitivity analysis of doa to L_bo
+% 13-5-2019
+
+theta_bo = 5/57.3;
+phi_bo = theta_bo; 
+psi_bo = theta_bo;
+
+dL_bo =  [0       ,      phi_bo  ,      -theta_bo;
+         -phi_bo ,      0       ,       phi_bo ;
+         theta_bo,      -phi_bo ,       0];
+deltaDoaY = zeros(3,N);
+for i = 1:N
+   Omega = [p(i);q(i);r(i)]; 
+   theta = OT_a.THETA(i)/57.3; phi = OT_a.PHI(i)/57.3; psi = OT_a.PSI(i)/57.3;
+   L_oi =  [cos(theta)*cos(psi) cos(theta)*sin(psi) -sin(theta);
+            sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi) sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi) sin(phi)*cos(theta);
+            cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi) cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi) cos(phi)*cos(theta)];    
+   deltaDoaY(:,i) = dL_bo * L_oi* ([0;0;g] - dVoB(i,:)');
+end
+deltaDoaZ = [deltaDoaY(1,du)';deltaDoaY(2,du)';deltaDoaY(3,du)'];
+DeltaDoa = lscov(GGr,deltaDoaZ);
+
+deltaVi = zeros(3,N);
+for i = 1:N
+   Omega = [p(i);q(i);r(i)]; 
+   theta = OT_a.THETA(i)/57.3; phi = OT_a.PHI(i)/57.3; psi = OT_a.PSI(i)/57.3;
+   L_oi =  [cos(theta)*cos(psi) cos(theta)*sin(psi) -sin(theta);
+            sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi) sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi) sin(phi)*cos(theta);
+            cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi) cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi) cos(phi)*cos(theta)];    
+   deltaVi(:,i) = cross(Omega,DeltaDoa) - dL_bo*L_oi*VoI(i,:)';
+end
+
+figure
+plot(rc); hold on
+plot(DeltaDoa)
+
+figure
+plot(V1(du,:)); hold on
+plot(deltaVi(:,du)',':');
 %% Estimate rp by filtering the position.
 Xo = butterworth(OT_a.posCO_E(:,1),4,15/526); Yo = butterworth(OT_a.posCO_E(:,2),4,15/526); Zo = butterworth(OT_a.posCO_E(:,3),4,15/526);
 Xp = butterworth(Xo,4,2.5/256); Yp = butterworth(Yo,4,2.5/256); Zp = butterworth(Zo,4,2.5/256);

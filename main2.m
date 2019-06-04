@@ -10,7 +10,7 @@ import = 1;
 if import == 1
     clear all
 
-    index = 20; %b47 r54 81
+    index = 32; %b47 r54 81
 
     addpath(genpath('E:\surfdrive\DATA\_code_import_files'));
     addpath(genpath('E:\surfdrive\DATA\func_common'));
@@ -64,8 +64,8 @@ end
 % plot(OB_a.TIME,OB_a.r,'r'); hold on; grid on;
 %% preprocessing data
 
-DU = [1, length(OT_a.TIME)];
-DU = [round(length(OT_a.TIME)/20), round(length(OT_a.TIME)*9.5/10)];
+% DU = [1, length(OT_a.TIME)];
+% DU = [round(length(OT_a.TIME)/20), round(length(OT_a.TIME)*9.5/10)];
 % DU = [10920 139600]; %RB n = 0;
 % DU = [1 137900]; %LB n = 0
 % DU = [24950 32450]; %#48 v = 1
@@ -97,6 +97,12 @@ DU = [round(length(OT_a.TIME)/20), round(length(OT_a.TIME)*9.5/10)];
 % DU = [130500 131500]; %#50 v = 9
 
 % DU = [11710,12880]; %#135
+
+% DU = [23850 28950]; %#20 V = 2
+% DU = [41890 49450]; %#20 V = 4
+% DU = [68020 71420]; %#20 V = 6
+% DU = [79690 87430]; %#20 V = 8
+DU = [7174 87430];
 
 g = 9.8124;
 
@@ -214,31 +220,6 @@ psi_mod = mod(OT_a.PSI,360)-180;
 
 % plot figures
 
-% figure
-% plot(OT_a.TIME,phi_s);
-% hold on
-% plot(OT_a.TIME,theta_s);
-% xlabel('TIME'); legend('phi_s','theta_s');
-% 
-% figure
-% subplot(3,1,1);
-% plot(Vs(du,1),As(du,1));  ylabel('As_x');title(take.name);
-% grid on;
-% subplot(3,1,2);
-% plot(Vs(du,2),As(du,2)/0.81);grid on; ylabel('As_y');
-% subplot(3,1,3);
-% plot(Vs(du,3),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
-% 
-
-% figure
-% subplot(3,1,1);
-% plot(sqrt(OT_a.VX_air(du).^2+VY_air_filt(du).^2+OT_a.VZ_air(du).^2),As(du,1));  ylabel('As_x');title(take.name);
-% grid on;
-% subplot(3,1,2);
-% plot(VY_air_filt(du),As(du,2));grid on; ylabel('As_y');
-% subplot(3,1,3);
-% plot(VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
-
 figure
 subplot(3,1,2);
 plot(-VY_air_filt(du),-As(du,1));  ylabel('As_y');
@@ -248,23 +229,76 @@ plot(-VY_air_filt(du),As(du,2));grid on; ylabel('As_x');title(take.name);
 subplot(3,1,3);
 plot(-VY_air_filt(du),As(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
 
-% figure
-% plot(VY_air_filt(du),OB_a.R(du)); ylabel('R'); xlabel('Vy_{air}');title(take.name);
-% % 
-% 
-% figure
-% plot(psi_mod(du),OB_a.R(du));
-% 
-% figure
-% plot(Vs(du,2),As(du,2)*PARA.mass/1000); grid on; xlabel('Vs_y'); ylabel('As_y');
+%% validation to predict the lateral force on the stability frame.
+m = PARA.mass/1000;
+p_filt =  butterworth(OB_a.p,4,15/256);
+q_filt =  butterworth(OB_a.q,4,15/256);
+r_filt =  butterworth(OB_a.r,4,15/256);
+param.l = PARA.l; param.b = PARA.b; param.R = PARA.R; param.d_ratio = ones(4,1);
+omega1 = OB_a.w1obs*2*pi/60; omega2 = OB_a.w2obs*2*pi/60;
+omega3 = OB_a.w3obs*2*pi/60; omega4 = OB_a.w4obs*2*pi/60;
+As_model = zeros(length(OT_a.TIME),3);
+Fb = zeros(length(OT_a.TIME),3);
+Fb_filt = zeros(length(OT_a.TIME),3);
+% rc is manually added.
+rc = [  -0.0234;
+        -0.0004;
+         0.0258];
+param.rc = rc;     
+for i = 1:length(OT_a.TIME)
+    vel = [OT_a.U_air(i), OT_a.V_air(i), OT_a.W_air(i)];
+    rates = [p_filt(i),q_filt(i),r_filt(i)];
+    omega = [omega1(i),omega2(i),omega3(i),omega4(i)];
+    [F,M] = FM_BB2_6DOF_20th_Jan(vel,rates,omega,param);
+    
+    Fb(i,:) = [F(1),F(2),F(3)]';
+%     Mb(i,:) = [M(1),M(2),M(3)]';
+
+end
+
+Fb_filt(:,1) = butterworth(Fb(:,1),4,2/256);
+Fb_filt(:,2) = butterworth(Fb(:,2),4,2/256);
+Fb_filt(:,3) = butterworth(Fb(:,3),4,2/256);
+
+for i = 1:length(OT_a.TIME)
+    theta = OT_a.THETA(i)/57.3; phi = OT_a.PHI(i)/57.3; psi = OT_a.PSI(i)/57.3;
+    R_BI = [cos(theta)*cos(psi) cos(theta)*sin(psi) -sin(theta);
+            sin(phi)*sin(theta)*cos(psi)-cos(phi)*sin(psi) sin(phi)*sin(theta)*sin(psi)+cos(phi)*cos(psi) sin(phi)*cos(theta);
+            cos(phi)*sin(theta)*cos(psi)+sin(phi)*sin(psi) cos(phi)*sin(theta)*sin(psi)-sin(phi)*cos(psi) cos(phi)*cos(theta)];    
+    
+    theta = theta_s(i); phi = phi_s(i);
+    R_SI = [cos(theta) 0 -sin(theta);
+            sin(phi)*sin(theta) cos(phi) sin(phi)*cos(theta);
+            cos(phi)*sin(theta) -sin(phi) cos(phi)*cos(theta)];    
+    
+    R_SB = R_SI * R_BI'; 
+    
+    Ai_model(i,:) = Fb_filt(i,:)/m * R_IB';
+    As_model(i,:) = Fb_filt(i,:)/m * R_SB';
+end
+
+figure
+subplot(3,1,2);
+plot(-VY_air_filt(du),-As_model(du,1));  ylabel('As_y');
+grid on;
+subplot(3,1,1);
+plot(-VY_air_filt(du),As_model(du,2));grid on; ylabel('As_x');title(take.name);
+subplot(3,1,3);
+plot(-VY_air_filt(du),As_model(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_z');
+
+figure
+subplot(3,1,2);
+plot(-VY_air_filt(du),-Ai_model(du,1));  ylabel('Ai_y');
+grid on;
+subplot(3,1,1);
+plot(-VY_air_filt(du),Ai_model(du,2));grid on; ylabel('Ai_x');title(take.name);
+subplot(3,1,3);
+plot(-VY_air_filt(du),Ai_model(du,3));grid on;xlabel('Vy_{air}'); ylabel('As_i');
+return;
 
 
-% figure
-% plot(Vs(du,2),As(du,3)*PARA.mass/1000); grid on; xlabel('Vs_y'); ylabel('Fz');
 
-% figure
-% plot(Vs(du,2),-As(du,3)*PARA.mass/1000./w_bar(du).^2/Area/R^2/rho); grid on; xlabel('Vs_y'); ylabel('Ct')
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Aerodynamc moment, body axis.
 Ip = PARA.Ip;
 Iv = PARA.Iv;
@@ -312,51 +346,11 @@ dMx = Mx - k0*b*up;
 dMy = My - k0*l*uq;
 dMz = Mz - t0*ur - dr*r;
 
-% figure(11)
-% subplot(2,3,5)
-% plot(compress_matrix(psi_mod(du),50),compress_matrix(dMx,50),'+'); hold on;
-% plot(compress_matrix(psi_mod(du),50),compress_matrix(dMy,50),'o'); hold on;
-
-% figure
-% plot3(compress_matrix(OT_a.VY_air,20),compress_matrix(psi_mod,20),compress_matrix(dMx,20),'.')
 
 return;
 
 
 %% Plot
-
-% figure
-% subplot(2,1,1)
-% plot(OB_a.TIME,ax_filt); hold on;
-% plot(OB_a.TIME,ay_filt);
-% subplot(2,1,2)
-% plot(OB_a.TIME,Ax_g); hold on;
-% plot(OB_a.TIME,Ay_g);
-% 
-% figure
-% subplot(2,3,1);
-% pwelch(OB_a.ax,[],[],[],512);
-% subplot(2,3,2);
-% pwelch(OB_a.ay,[],[],[],512);
-% subplot(2,3,3);
-% pwelch(OB_a.az,[],[],[],512);
-% subplot(2,3,4);
-% pwelch(OB_a.p,[],[],[],512);
-% subplot(2,3,5);
-% pwelch(OB_a.q,[],[],[],512);
-% subplot(2,3,6);
-% pwelch(OB_a.r,[],[],[],512);
-
-
-% xlim([22,24]);
-% fs = 512;
-% figure
-% subplot(2,1,1)
-% periodogram(OB_a.ax,[],[],fs);
-% subplot(2,1,2)
-% periodogram(OB_a.ay,[],[],fs);
-% 
-% return;
 
 figure
 subplot(3,1,1)
@@ -374,35 +368,6 @@ plot(OB_a.TIME,OB_a.psi*57.3); hold on; grid on
 % plot(OT_a.TIME-OT_a.TIME(1),mod(OT_a.PSI,360)-180);
 plot(OB_a.TIME,OB_a.psi_ot*57.3);
 % xlim([22,24]);
-
-
-% figure
-% subplot(3,1,1)
-% plot(OB_a.TIME,OB_a.ax);hold on; grid on;title(['az^b',' ',take.name]);
-% plot(OB_a.TIME,ax_filt);
-% subplot(3,1,2)
-% plot(OB_a.TIME,OB_a.ay);hold on; grid on;
-% plot(OB_a.TIME,ay_filt);
-% subplot(3,1,3)
-% plot(OB_a.TIME,OB_a.az);hold on; grid on;
-% plot(OB_a.TIME,az_filt);
-% 
-
-figure
-% subplot(3,1,1)
-% plot(OB_a.TIME,OB_a.p);hold on; grid on;title('pqr');
-% subplot(3,1,2)
-% plot(OB_a.TIME,OB_a.q);hold on; grid on;
-% subplot(3,1,3)
-% plot(OB_a.TIME,OB_a.r);hold on; grid on;
-
-
-
-% figure
-% plot(OB_a.TIME,OB_a.w1obs_indi); hold on; grid on;title(['w',' ',take.name]);
-% plot(OB_a.TIME,OB_a.w2obs_indi);
-% plot(OB_a.TIME,OB_a.w3obs_indi);
-% plot(OB_a.TIME,OB_a.w4obs_indi);
 
 figure
 subplot(3,1,1)
